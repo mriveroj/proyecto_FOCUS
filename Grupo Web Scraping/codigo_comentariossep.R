@@ -1,6 +1,6 @@
 
 datos <- readRDS("C:/Users/USUARIO_PC/Documents/GitHub/proyecto_FOCUS/Grupo Web Scraping/restaurant_trip_advisor.rds") 
-
+datos <- readRDS("restaurant_trip_advisor.rds")
 library(tidyverse)
 dat<- data.frame(id=datos$id, comentarios= datos$Comentarios)
 
@@ -12,3 +12,6 @@ dat<-dat %>%
                      "coment23","coment24","coment25","coment26","coment27"
                      ,"coment29","coment30","coment31"),
            sep= "~")
+
+
+#write.csv(dat, "comentarios_separados.csv")
