@@ -13,5 +13,7 @@ dat<-dat %>%
                      ,"coment29","coment30","coment31"),
            sep= "~")
 
+seq <- seq(from=2, to=30, by=2)
+dat <- dat %>% select(-seq)
 
 #write.csv(dat, "comentarios_separados.csv")
