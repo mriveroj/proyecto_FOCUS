@@ -32,12 +32,12 @@ html_attr('href')
 
 # Tipos de cocina
 cocina <-
-c('Saludable', 'De la india', 'Cafeterías', 'Pizza', 'Tailandesa', 'Española',
+c('Saludable', 'De la india', 'CafeterÃ­as', 'Pizza', 'Tailandesa', 'EspaÃ±ola',
  'Americana', 'Francesa', 'Peruana', 'Japonesa', 'China', 'Cubana', 'Steakhouses (Carnes)', 'Argentina',
- 'Vegetariana', 'Vegana', 'Mediterránea', 'Italiana', 'Mexicana',
- 'Bar y Pub', 'Caribeña', 'Árabe', 'Comida Rápida', 'Sudamericana',
- 'Mariscos', 'Venezolana', 'Africana', 'Asiática', 'Griega',
- 'Fusión', 'Internacional')
+ 'Vegetariana', 'Vegana', 'MediterrÃ¡nea', 'Italiana', 'Mexicana',
+ 'Bar y Pub', 'CaribeÃ±a', 'Ãrabe', 'Comida RÃ¡pida', 'Sudamericana',
+ 'Mariscos', 'Venezolana', 'Africana', 'AsiÃ¡tica', 'Griega',
+ 'FusiÃ³n', 'Internacional')
 
 # Links de los tipos de cocina, hay 31
 link_res <-c(
@@ -74,7 +74,7 @@ link_res <-c(
 ,"https://www.tripadvisor.co/Restaurants-g297473-c22-Barranquilla_Atlantico_Department.html")
 
 
-# Estas son las categorías, tecnicamente para confirmar, no sirve de a mucho
+# Estas son las categorÃ­as, tecnicamente para confirmar, no sirve de a mucho
 fill_res <- data.frame(name = 1:NROW(link_res))
 for (i in 1:NROW(link_res)) {
   
@@ -113,48 +113,49 @@ f %>% html_nodes("._1hkogt_o+ ._1ud-0ITN ._2VxaSjVD") %>% html_text()  #Ranking
 f %>% html_nodes('._3UjHBXYa div:nth-child(1) ._1XLfiSsv') %>% html_text() # Price Range
 
 # Campos a extraer - Corre esto
-tet <- c("._2mn01bsa:nth-child(1)",".r2Cf69qf","._10Iv7dOs",
+tet <- c("._3a1XQ88S","._2mn01bsa:nth-child(1)",".r2Cf69qf","._10Iv7dOs",
          "._2vbD36Hr ._27M8V6YV",".ct1ZIzQ6",".noQuotes , .partial_entry",
          "._1hkogt_o+ ._1ud-0ITN ._2VxaSjVD",'._3UjHBXYa div:nth-child(1) ._1XLfiSsv')
 
-
 # Aqui se extraen todos los campos de cada pagina web
-# Tiempo de Corrida Largo por lo menos 10 minutos, hasta 15 min me duró
+# Tiempo de Corrida Largo por lo menos 10 minutos, hasta 15 min me durÃ³
 
-time_1 <- Sys.time()  # Esto es solo para mostrar el tiempo que demoró en correr
+time_1 <- Sys.time()  # Esto es solo para mostrar el tiempo que demorÃ³ en correr
 
 rest_data <- list()
-all_data <- list()
 for (i in 1:NROW(link_res)) {
   for (k in 1:NROW(url_rest[[i]])) {
     
     a <- read_html((url_rest[[i]])[k]) ; b <- list()
-  for (j in 1:NROW(tet)) {
-    
-    b[[j]] <- a %>%  html_nodes(tet[j]) %>% html_text() 
-  }
-  rest_data[[k]] <- b
+    for (j in 1:NROW(tet)) {
+      
+      b[[j]] <- a %>%  html_nodes(tet[j]) %>% html_text() 
+    }
+    rest_data[[k]] <- b
   }
   all_data[[i]] <- rest_data
+  rest_data <- list()
 }
-time <- Sys.time() # Esto es solo para mostrar el tiempo que demoró en correr
+
+time <- Sys.time() # Esto es solo para mostrar el tiempo que demorÃ³ en correr
 remove(a) ; remove(b) 
 
 
 # DATAFRAME
-var <- c('Cocina','Money','Calificacion', 'Numero de calificaciones', 'Direccion', 'Horario', 'Comentarios', 'Ranking','Price Range')
+var <- c('Cocina','Nombre','Money','Calificacion', 'Numero de calificaciones', 'Direccion', 'Horario', 'Comentarios', 'Ranking','Price Range')
 
 tripad_rest <-as.data.frame.matrix(matrix(0,1000,NROW(var)+1))
 names(tripad_rest) <- c("id",var)
 
 id <- 0
-for (i in 1:length(all_data)) {
+for (i in 1:NROW(link_res)) {
   
   for (j in 1:length(all_data[[i]])) {
     id <- id + 1
+    list_ita <- list()
     list_ita <- all_data[[i]][[j]]
     list_ita[lengths(list_ita)==0] <- NA_character_
-    for (z in 1:10) {
+    for (z in 1:11) {
       #Para cada dimension o variable por ej "id" o "Cocina"
       if (z == 1){ 
         tripad_rest[id,"id"] <- id
@@ -164,7 +165,7 @@ for (i in 1:length(all_data)) {
           tripad_rest[id,"Cocina"] <- cocina[i]
         }else{
           
-          if(z == 8){
+          if(z == 9){
             tripad_rest[id,"Comentarios"] <- paste(list_ita[[(z-2)]],
                                                    collapse = "~")
           }else{
@@ -181,12 +182,14 @@ for (i in 1:length(all_data)) {
   }
 }
 
-tripad_rest <- tripad_rest[1:930,]
+tripad_rest <- tripad_rest[tripad_rest$id!=0,]
 View(tripad_rest)
 
 ## Save an object to a file
-# saveRDS(tripad_rest[1:935,], file = "restaurant_trip_advisor.rds")
+# saveRDS(tripad_rest, file = "restaurant_trip_advisor.rds")
 ## Restore the object
+# tripad_rest2 <- readRDS(file = "restaurant_trip_advisor.rds")
+
 
 
 
@@ -227,14 +230,14 @@ View(tripad_rest)
 # borrar %>%  html_nodes(".info-name") %>% html_text()
 # borrar %>%  html_nodes(".info-name") %>% 
 # 
-# # Scrape 1: Título
+# # Scrape 1: TÃ­tulo
 # titulo <- html_nodes(html_web, ".lister-item-header a")
 # titulo <- html_text(titulo)
 # # Equivalente:
 # titulo <- html_web %>% html_nodes(".lister-item-header a") %>% html_text()
 # 
-# # Scrape 2: Año de estreno
-# año_estreno <- html_web %>% 
+# # Scrape 2: AÃ±o de estreno
+# aÃ±o_estreno <- html_web %>% 
 #   html_nodes(".lister-item-year.text-muted.unbold") %>% 
 #   html_text() %>% 
 #   str_sub(start = 2, end = 5) %>%
@@ -248,7 +251,7 @@ View(tripad_rest)
 #   map_chr(1) %>%
 #   as.numeric()
 # 
-# # Scrape 4: Género
+# # Scrape 4: GÃ©nero
 # genero <- html_web %>%
 #   html_nodes(".genre") %>%
 #   html_text() %>%
@@ -261,8 +264,8 @@ View(tripad_rest)
 # 
 # # Se juntan todas las variables creadas en un data set:
 # top_50 <- tibble(Pelicula = titulo,
-#                      Año = año_estreno,
-#                      Duración_min = duracion,
+#                      AÃ±o = aÃ±o_estreno,
+#                      DuraciÃ³n_min = duracion,
 #                      Genero = genero,
 #                      Rating = rating)
 # 
