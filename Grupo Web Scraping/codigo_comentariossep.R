@@ -17,3 +17,4 @@ seq <- seq(from=2, to=30, by=2)
 dat <- dat %>% select(-seq)
 
 #write.csv(dat, "comentarios_separados.csv")
+#saveRDS(dat, "comentarios_separados.rds")
