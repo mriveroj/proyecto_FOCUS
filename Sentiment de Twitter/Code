@@ -1,0 +1,181 @@
+install.packages("wordcloud2")
+library(rtweet)
+library(wordcloud2)
+library(RColorBrewer)
+library(plyr)
+library(ggplot2)
+library(tidyverse)
+
+# #----Datos de la App----
+# api_key             <- "BiOJhEwMOXBafRjoLE67Qh6MV"
+# api_secret          <- "vKNW6kkGMTUB3hT0IVYbYhQkHGhq3Rrl91SrLo4taILwRhsAGw"
+# access_token        <- "1247606882-QIvdfavoGJscykfujLabQoIHBATWVmb3j0vZ2Bl"
+# access_token_secret <- "68xzFWNNOHT4YYWSIpB4AMrtZ05nXjBGka6xmTDUtvhjE"
+# twitter_app         <- "viviana990320"
+# 
+# 
+# #---- Accedemos a Twitter a traves de los datos del token----
+# create_token(
+#   app             = twitter_app,
+#   consumer_key    = api_key,
+#   consumer_secret = api_secret,
+#   access_token    = access_token,
+#   access_secret   = access_token_secret)
+# 
+# #---- Analisis de tweets ----
+# #trabajaremos con estos por ahora
+# datos<- search_tweets("#comida OR comida OR delicia OR sabor OR
+# Rica OR saludable OR cocina OR #almuerzo OR #desayunos OR #cena OR comida tÃ­pica OR
+# #MenuDelDia OR #Menu OR pollo OR ceviche OR hamburguesa OR servicio 
+#                       OR italiana OR vegano OR libanesa OR
+#                       parrillada OR mariscos OR china OR
+#                       postres OR postre OR vino OR jugos
+#                       OR comidacaribeÃ±a OR cerveza",n = 3000, include_rts = FALSE, lang="es", geocode =  '10.99904,-74.863,800km')
+# 
+# 
+# saveRDS(datos,file="tweets.Rda")
+tweets<-readRDS(file="tweets.Rda")
+# str(tweets)
+# tweets$text[1:5]
+
+#----Limpieza de datos ----
+#Convertimos el texto a mayusculas
+tweets$text <- toupper(tweets$text)
+#Eliminar la tildes
+tweets$text <- chartr(old = "ÁÉÍÓÚ",new = "AEIOU",x = tweets$text)
+# head(tweets$text, 5)
+#Convertimos a minusculas
+tweets$text<- tolower(tweets$text)
+# head(tweets$text, 5)
+
+# Sacamos el texto y lo definimos con la siguiente variable
+tweet_txt <- tweets$text
+# Mostramos los 10 primeros
+#head(tweet_txt, 10)
+
+#Limpieza de datos
+tweet_txt<- gsub("â","(RT|via)((?:\\b\\W*@\\w+)+)",tweet_txt)
+
+# Veamos los 10 primeros tweets
+#head(tweet_txt, 10)
+
+#Eliminacion de usuarios
+tweet_txt<- gsub("@\\w+", "", tweet_txt)
+
+#EliminaciÃ³n de links
+tweet_txt <-  gsub("\\bhttp[a-zA-Z0-9]*\\b", "", tweet_txt)
+#head(tweet_txt, 5)
+
+#Eliminacion de caracteres NO alfanumericos
+tweet_txt <- gsub("[^a-zA-Z0-9 ]", "", tweet_txt)
+#head(tweet_txt, 5)
+#Eliminando la puntuacion
+tweet_txt <- gsub("[[:punct:]]", "", tweet_txt)
+#head(tweet_txt, 5)
+
+#Quitamos los tco. 
+#Los tco son un servicio que se usan para cortar los links
+#Ejemplo:tcowUfSXy00Qq tcouE1uBIKakb
+tweet_txt <-  gsub("\\btco[a-zA-Z0-9]*\\b", "",tweet_txt)
+#head(tweet_txt, 5)
+
+#Eliminacion de NAÂ´s 
+tweet_txt <- tweet_txt[!is.na(tweet_txt)]
+#head(tweet_txt, 5)
+
+#Eliminamos emojis
+tweet_txt <- iconv(tweet_txt, 'UTF-8', 'ASCII')
+#head(tweet_txt, 5)
+
+#Limpieza de datos tabuladores
+tweet_txt <- gsub("[ \t]{2,}", "",tweet_txt)
+tweet_txt<- gsub("^\\s+|\\s+$", "", tweet_txt)
+head(tweet_txt, 5)
+
+#----Construccion corpus----
+#Construimos el corpus
+library(tm)
+tweets_corpus<-iconv(tweet_txt)
+tweets_corpus<-Corpus(VectorSource(tweet_txt))
+inspect(tweets_corpus[1:5])
+
+#Pasamos todo a mayusculas
+tweets_corpus<-tm_map(tweets_corpus,tolower)
+inspect(tweets_corpus[1:5])
+
+#Eliminamos la puntuacion
+tweets_corpus<-tm_map(tweets_corpus,removePunctuation)
+inspect(tweets_corpus[1:5])
+#Eliminamos los numeros
+tweets_corpus<-tm_map(tweets_corpus,removeNumbers)
+
+# Eliminamos los espacios en blanco
+tweets_corpus <- tm_map(tweets_corpus, stripWhitespace)
+
+#Eliminando palabras comunes
+#Ejemplo: de, la , que, el, etc
+tweets_cleanset<-tm_map(tweets_corpus,removeWords,stopwords("es"))
+inspect(tweets_cleanset[1:5])
+
+tweets_tdm<-TermDocumentMatrix(tweets_cleanset)
+tweets_tdm
+tweets_tdm<-as.matrix(tweets_tdm)
+tweets_tdm[1:10,1:20]
+
+#---- Grafico con ggplot2 ----
+#Construccion de diagram,a de barras
+#Diagrama de barras
+t<-rowSums(tweets_tdm)
+t<-subset(t,t>=20)
+
+
+
+
+
+#---- Nube de palabras ----
+library(wordcloud2)
+t<-data.frame(names(t),t)
+colnames(t)<-c("word","freq")
+wordcloud2(t,
+           size = 1,
+           shape = "cicle",
+           rotateRatio = 0.5,
+           minSize = 1)
+View(t)
+
+#----Analisis de sentimiento----
+library(syuzhet)
+library(lubridate)
+library(ggplot2)
+library(scales)
+library(reshape2)
+library(dplyr)
+
+#obtain sentiment scores
+sentiment<-iconv(tweets$text,to="UTF-8")
+View(sentiment)
+s<-get_nrc_sentiment(sentiment,language = "spanish")
+head(s)
+
+
+
+
+
+#Bar Plot
+barplot(colSums(s),
+        las=2,
+        col=rainbow(10),
+        ylab="count",
+        main="Analisis de sentimiento gatronomÃ­a Atlanticense")
+
+
+#para cuantificar los sentimientos
+k<-get_sentiment(tweets$text,language = "spanish")
+s$porcentaje<-k
+View(s)
+s$percepcion[s$porcentaje>0]<-"positivo"
+s$percepcion[s$porcentaje<0]<-"negativo"
+s$percepcion[s$porcentaje<=0 & s$porcentaje>=0]<-"neutral"
+#diagrama de barras de la percepcion
+ggplot(s, aes(x = percepcion)) + geom_bar()+ xlab("percepcion") + ylab ("NÃºmero de tweets")
+
